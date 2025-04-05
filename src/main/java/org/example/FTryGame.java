@@ -2,14 +2,19 @@ package org.example;
 
 import com.almasb.fxgl.app.GameApplication;
 import com.almasb.fxgl.app.GameSettings;
+import com.almasb.fxgl.app.scene.Viewport;
 import com.almasb.fxgl.entity.Entity;
 import com.almasb.fxgl.input.UserAction;
 import javafx.geometry.Point2D;
+import javafx.scene.Camera;
 import javafx.scene.Cursor;
 import javafx.scene.input.KeyCode;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
@@ -18,6 +23,8 @@ public class FTryGame extends GameApplication {
 
     private static final int PLATFORM_WIDTH = 50;
     private static final int PLATFORM_HEIGHT = 10;
+    private static final int PLATFORM_COUNT = 10;
+
     private static final int DOODLE_SIZE = 20;
     private static final int DOODLE_SPEED = 2;
     private static final int JUMP_HEIGHT = 5;
@@ -26,7 +33,9 @@ public class FTryGame extends GameApplication {
         DOODLE, PLATFORM
     }
 
+    private Viewport viewport;
     private Entity Doodle;
+    private List<Entity> Platforms = new ArrayList<>();
 
     @Override
     protected void initSettings(GameSettings settings) {
@@ -54,17 +63,17 @@ public class FTryGame extends GameApplication {
 
     }
 
-
-
     @Override
     protected void initGame() {
         Random random = new Random();
-        int platformCout = 10;
-        for (int i = 0; i < platformCout; i++) {
-            spawnPlatform(random.nextInt(getAppWidth()-1+1)+1, random.nextInt(getAppHeight()-1+1)+1);
-        }
 
-        Doodle = spawnBall(getAppWidth() / 2 - DOODLE_SIZE / 2, getAppHeight() / 2 - DOODLE_SIZE / 2);
+        for (int i = 0; i < PLATFORM_COUNT; i++) {
+            Platforms.add(spawnPlatform(random.nextInt(getAppWidth()-1+1)+1, random.nextInt(getAppHeight()-1+1)+1));
+        }
+        Doodle = spawnBall(getAppWidth() / 2 - DOODLE_SIZE / 2, getAppHeight() - DOODLE_SIZE);
+//        getGameScene().getViewport().bindToEntity(Doodle, 0, getAppHeight() / 2);
+
+        viewport = getGameScene().getViewport();
     }
 
     @Override
@@ -78,24 +87,11 @@ public class FTryGame extends GameApplication {
         Doodle.setProperty("velocity", new Point2D(0, velocity.getY() + .1));
         Doodle.translate(velocity);
 
-//        if (Doodle.getX() == paddle1.getRightX()
-//                && Doodle.getY() < paddle1.getBottomY()
-//                && Doodle.getBottomY() > paddle1.getY()) {
-//            Doodle.setProperty("velocity", new Point2D(-velocity.getX(), velocity.getY()));
-//        }
-//
-//        if (Doodle.getRightX() == paddle2.getX()
-//                && Doodle.getY() < paddle2.getBottomY()
-//                && Doodle.getBottomY() > paddle2.getY()) {
-//            Doodle.setProperty("velocity", new Point2D(-velocity.getX(), velocity.getY()));
-//        }
+        // Вычисляем позицию по Y (центрируем игрока)
+        double targetY = Doodle.getY() - getAppHeight()/2;
+        double currentY = viewport.getY();
+        viewport.setY(currentY+ (targetY - currentY) * 0.1);
 
-//        if (Doodle.getBottomY() >= platform.getY()
-//                && Doodle.getY() < platform.getY()
-//                && Doodle.getRightX() > platform.getX()
-//                && Doodle.getX() < platform.getRightX()) {
-//            Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
-//        }
 
         if (Doodle.getX() <= -Doodle.getWidth()/2) {
             Doodle.setX(getAppWidth() - Doodle.getWidth()/2-1);
@@ -105,14 +101,15 @@ public class FTryGame extends GameApplication {
             Doodle.setX(-Doodle.getWidth()/2+1);
         }
 
-        if (Doodle.getY() <= 0) {
-            Doodle.setY(0);
-            Doodle.setProperty("velocity", new Point2D(0, -velocity.getY()));
-        }
-
         if (Doodle.getBottomY() >= getAppHeight()) {
             Doodle.setY(getAppHeight() - DOODLE_SIZE);
             Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
+        }
+
+        for(Entity entity : Platforms){
+            if (entity.getY() > viewport.getY()+viewport.getHeight()){
+                entity.removeFromWorld();
+            }
         }
     }
 
@@ -124,6 +121,7 @@ public class FTryGame extends GameApplication {
                 && Doodle.getRightX() > platform.getX()
                 && Doodle.getX() < platform.getRightX()) {
             Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
+
         }
         });
     }
