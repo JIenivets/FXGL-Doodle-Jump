@@ -9,8 +9,8 @@ import javafx.scene.Cursor;
 import javafx.scene.input.KeyCode;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Text;
-import java.util.Map;
+
+import java.util.Random;
 
 import static com.almasb.fxgl.dsl.FXGL.*;
 
@@ -22,7 +22,10 @@ public class FTryGame extends GameApplication {
     private static final int DOODLE_SPEED = 2;
     private static final int JUMP_HEIGHT = 5;
 
-    private Entity platform;
+    public enum Types {
+        DOODLE, PLATFORM
+    }
+
     private Entity Doodle;
 
     @Override
@@ -55,7 +58,12 @@ public class FTryGame extends GameApplication {
 
     @Override
     protected void initGame() {
-        platform = spawnPlatform(20, 400);
+        Random random = new Random();
+        int platformCout = 10;
+        for (int i = 0; i < platformCout; i++) {
+            spawnPlatform(random.nextInt(getAppWidth()-1+1)+1, random.nextInt(getAppHeight()-1+1)+1);
+        }
+
         Doodle = spawnBall(getAppWidth() / 2 - DOODLE_SIZE / 2, getAppHeight() / 2 - DOODLE_SIZE / 2);
     }
 
@@ -81,20 +89,19 @@ public class FTryGame extends GameApplication {
 //                && Doodle.getBottomY() > paddle2.getY()) {
 //            Doodle.setProperty("velocity", new Point2D(-velocity.getX(), velocity.getY()));
 //        }
-        if (Doodle.getBottomY() >= platform.getY()
-                && Doodle.getY() < platform.getY()
-                && Doodle.getRightX() > platform.getX()
-                && Doodle.getX() < platform.getRightX()) {
-            Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
-        }
+
+//        if (Doodle.getBottomY() >= platform.getY()
+//                && Doodle.getY() < platform.getY()
+//                && Doodle.getRightX() > platform.getX()
+//                && Doodle.getX() < platform.getRightX()) {
+//            Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
+//        }
 
         if (Doodle.getX() <= -Doodle.getWidth()/2) {
-            System.out.println("Left");
             Doodle.setX(getAppWidth() - Doodle.getWidth()/2-1);
         }
 
         if (Doodle.getRightX() >= getAppWidth() + Doodle.getWidth()/2) {
-            System.out.println("Right");
             Doodle.setX(-Doodle.getWidth()/2+1);
         }
 
@@ -109,20 +116,34 @@ public class FTryGame extends GameApplication {
         }
     }
 
-
+    @Override
+    protected void initPhysics() {
+        onCollision(Types.DOODLE, Types.PLATFORM, (doodle,platform) -> {
+            if (Doodle.getBottomY() >= platform.getY()
+                && Doodle.getY() < platform.getY()
+                && Doodle.getRightX() > platform.getX()
+                && Doodle.getX() < platform.getRightX()) {
+            Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
+        }
+        });
+    }
 
     private Entity spawnBall(double x, double y) {
         return entityBuilder()
+                .type(Types.DOODLE)
                 .at(x, y)
                 .viewWithBBox(new Rectangle(DOODLE_SIZE, DOODLE_SIZE))
                 .with("velocity", new Point2D(0, DOODLE_SPEED))
+                .collidable()
                 .buildAndAttach();
     }
 
     private Entity spawnPlatform(double x, double y) {
         return entityBuilder()
+                .type(Types.PLATFORM)
                 .at(x, y)
                 .viewWithBBox(new Rectangle(PLATFORM_WIDTH, PLATFORM_HEIGHT, Color.LIGHTGREEN))
+                .collidable()
                 .buildAndAttach();
     }
 
