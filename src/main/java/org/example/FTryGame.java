@@ -16,19 +16,21 @@ import static com.almasb.fxgl.dsl.FXGL.*;
 
 public class FTryGame extends GameApplication {
 
-    private static final int PADDLE_WIDTH = 30;
-    private static final int PADDLE_HEIGHT = 100;
-    private static final int BALL_SIZE = 20;
-    private static final int PADDLE_SPEED = 5;
-    private static final int BALL_SPEED = 2;
+    private static final int PLATFORM_WIDTH = 50;
+    private static final int PLATFORM_HEIGHT = 10;
+    private static final int DOODLE_SIZE = 20;
+    private static final int DOODLE_SPEED = 2;
+    private static final int JUMP_HEIGHT = 5;
 
-    private Entity paddle1;
-    private Entity paddle2;
-    private Entity ball;
+    private Entity platform;
+    private Entity Doodle;
 
     @Override
     protected void initSettings(GameSettings settings) {
-        settings.setTitle("Pong");
+        settings.setWidth(300);
+        settings.setHeight(500);
+        settings.setTitle("Doodle Jump");
+        settings.setVersion(" ");
     }
 
     @Override
@@ -36,38 +38,25 @@ public class FTryGame extends GameApplication {
         getInput().addAction(new UserAction("Left") {
             @Override
             protected void onAction() {
-                ball.translateX(-BALL_SPEED);
+                Doodle.translateX(-DOODLE_SPEED);
             }
         }, KeyCode.A);
 
         getInput().addAction(new UserAction("Right") {
             @Override
             protected void onAction() {
-                ball.translateX(BALL_SPEED);
+                Doodle.translateX(DOODLE_SPEED);
             }
         }, KeyCode.D);
-//
-//        getInput().addAction(new UserAction("Up 2") {
-//            @Override
-//            protected void onAction() {
-//                paddle2.translateY(-PADDLE_SPEED);
-//            }
-//        }, KeyCode.UP);
-//
-//        getInput().addAction(new UserAction("Down 2") {
-//            @Override
-//            protected void onAction() {
-//                paddle2.translateY(PADDLE_SPEED);
-//            }
-//        }, KeyCode.DOWN);
+
     }
 
 
 
     @Override
     protected void initGame() {
-
-        ball = spawnBall(getAppWidth() / 2 - BALL_SIZE / 2, getAppHeight() / 2 - BALL_SIZE / 2);
+        platform = spawnPlatform(20, 400);
+        Doodle = spawnBall(getAppWidth() / 2 - DOODLE_SIZE / 2, getAppHeight() / 2 - DOODLE_SIZE / 2);
     }
 
     @Override
@@ -77,40 +66,46 @@ public class FTryGame extends GameApplication {
 
     @Override
     protected void onUpdate(double tpf) {
-        Point2D velocity = ball.getObject("velocity");
-        ball.setProperty("velocity", new Point2D(0, velocity.getY() + .2));
-        ball.translate(velocity);
+        Point2D velocity = Doodle.getObject("velocity");
+        Doodle.setProperty("velocity", new Point2D(0, velocity.getY() + .1));
+        Doodle.translate(velocity);
 
-//        if (ball.getX() == paddle1.getRightX()
-//                && ball.getY() < paddle1.getBottomY()
-//                && ball.getBottomY() > paddle1.getY()) {
-//            ball.setProperty("velocity", new Point2D(-velocity.getX(), velocity.getY()));
+//        if (Doodle.getX() == paddle1.getRightX()
+//                && Doodle.getY() < paddle1.getBottomY()
+//                && Doodle.getBottomY() > paddle1.getY()) {
+//            Doodle.setProperty("velocity", new Point2D(-velocity.getX(), velocity.getY()));
 //        }
 //
-//        if (ball.getRightX() == paddle2.getX()
-//                && ball.getY() < paddle2.getBottomY()
-//                && ball.getBottomY() > paddle2.getY()) {
-//            ball.setProperty("velocity", new Point2D(-velocity.getX(), velocity.getY()));
+//        if (Doodle.getRightX() == paddle2.getX()
+//                && Doodle.getY() < paddle2.getBottomY()
+//                && Doodle.getBottomY() > paddle2.getY()) {
+//            Doodle.setProperty("velocity", new Point2D(-velocity.getX(), velocity.getY()));
 //        }
+        if (Doodle.getBottomY() >= platform.getY()
+                && Doodle.getY() < platform.getY()
+                && Doodle.getRightX() > platform.getX()
+                && Doodle.getX() < platform.getRightX()) {
+            Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
+        }
 
-        if (ball.getX() <= -ball.getWidth()/2) {
+        if (Doodle.getX() <= -Doodle.getWidth()/2) {
             System.out.println("Left");
-            ball.setX(getAppWidth() - ball.getWidth()/2-1);
+            Doodle.setX(getAppWidth() - Doodle.getWidth()/2-1);
         }
 
-        if (ball.getRightX() >= getAppWidth() + ball.getWidth()/2) {
+        if (Doodle.getRightX() >= getAppWidth() + Doodle.getWidth()/2) {
             System.out.println("Right");
-            ball.setX(-ball.getWidth()/2+1);
+            Doodle.setX(-Doodle.getWidth()/2+1);
         }
 
-        if (ball.getY() <= 0) {
-            ball.setY(0);
-            ball.setProperty("velocity", new Point2D(0, -velocity.getY()));
+        if (Doodle.getY() <= 0) {
+            Doodle.setY(0);
+            Doodle.setProperty("velocity", new Point2D(0, -velocity.getY()));
         }
 
-        if (ball.getBottomY() >= getAppHeight()) {
-            ball.setY(getAppHeight() - BALL_SIZE);
-            ball.setProperty("velocity", new Point2D(0, -10));
+        if (Doodle.getBottomY() >= getAppHeight()) {
+            Doodle.setY(getAppHeight() - DOODLE_SIZE);
+            Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
         }
     }
 
@@ -119,15 +114,18 @@ public class FTryGame extends GameApplication {
     private Entity spawnBall(double x, double y) {
         return entityBuilder()
                 .at(x, y)
-                .viewWithBBox(new Rectangle(BALL_SIZE, BALL_SIZE))
-                .with("velocity", new Point2D(0, BALL_SPEED))
+                .viewWithBBox(new Rectangle(DOODLE_SIZE, DOODLE_SIZE))
+                .with("velocity", new Point2D(0, DOODLE_SPEED))
                 .buildAndAttach();
     }
 
-    private void resetBall() {
-        ball.setPosition(getAppWidth() / 2 - BALL_SIZE / 2, getAppHeight() / 2 - BALL_SIZE / 2);
-        ball.setProperty("velocity", new Point2D(BALL_SPEED, BALL_SPEED));
+    private Entity spawnPlatform(double x, double y) {
+        return entityBuilder()
+                .at(x, y)
+                .viewWithBBox(new Rectangle(PLATFORM_WIDTH, PLATFORM_HEIGHT, Color.LIGHTGREEN))
+                .buildAndAttach();
     }
+
 
     public static void main(String[] args) {
         launch(args);
