@@ -6,7 +6,7 @@ public class Config {
 
     public static final int PLATFORM_WIDTH = 50;
     public static final int PLATFORM_HEIGHT = 10;
-    public static final int PLATFORM_COUNT = 10;
+    public static final int PLATFORM_COUNT = 15;
 
     public static final int DOODLE_WIDTH = 20;
     public static final int DOODLE_HEIGHT = 20;

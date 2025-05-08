@@ -19,6 +19,8 @@ import static doodlejump.Config.*;
 public class Main extends GameApplication {
 
     private Viewport viewport;
+    private int poss = 3;
+    private int oldWay = 0;
 
     @Override
     protected void initSettings(GameSettings settings) {
@@ -36,14 +38,17 @@ public class Main extends GameApplication {
     @Override
     protected void initGame() {
         getGameWorld().addEntityFactory(new Factory());
-
-        Random random = new Random();
-        for (int i = 0; i < PLATFORM_COUNT; i++) {
-            spawn("platform",random.nextInt(getAppWidth()-1+1)+1, random.nextInt(getAppHeight()-1+1)+1);
-        }
-
-        spawn("Doodle",getAppWidth() / 2 - DOODLE_WIDTH / 2, getAppHeight() - DOODLE_HEIGHT);
         viewport = getGameScene().getViewport();
+
+
+        Generation.spawnPlatforms(15, W_WIDTH, 0, -W_HEIGHT*1);
+        Generation.spawnPlatforms(15, W_WIDTH, -W_HEIGHT*1, -W_HEIGHT*2);
+        Generation.spawnPlatforms(15, W_WIDTH, -W_HEIGHT*2, -W_HEIGHT*3);
+
+
+        spawn("Doodle",getAppWidth() / 2 - DOODLE_WIDTH / 2, -DOODLE_HEIGHT-10);
+        oldWay = (int)(getDoodle().getY()/W_HEIGHT);
+        System.out.println(oldWay);
     }
 
     @Override
@@ -87,15 +92,26 @@ public class Main extends GameApplication {
             Doodle.setX(-Doodle.getWidth()/2+1);
         }
 
-        if (Doodle.getBottomY() >= getAppHeight()) {
-            Doodle.setY(getAppHeight() - DOODLE_HEIGHT);
+        if (Doodle.getBottomY() >= 0) {
+            Doodle.setY(0 - DOODLE_HEIGHT);
             Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
         }
 
         for(Entity entity : getPlatforms()){
             if (entity.getY() > viewport.getY()+viewport.getHeight()){
                 entity.removeFromWorld();
+
             }
+        }
+
+        if (Math.abs(oldWay-Doodle.getY()/W_HEIGHT) > 1){
+            System.out.println("GENERATE "+poss);
+            Generation.spawnPlatforms(15, W_WIDTH, -W_HEIGHT*poss, -W_HEIGHT*(poss+1));
+
+            System.out.println(oldWay-Doodle.getY()/W_HEIGHT +"------------------"+ (int)Math.abs(Doodle.getY()/W_HEIGHT));
+            oldWay = (int)(getDoodle().getY()/W_HEIGHT);
+            poss+=1;
+            System.out.println(poss);
         }
     }
 
@@ -109,6 +125,7 @@ public class Main extends GameApplication {
                 Doodle.setProperty("velocity", new Point2D(0, -JUMP_HEIGHT));
 
             }
+//            System.out.println(Doodle.getY());
         });
     }
 
